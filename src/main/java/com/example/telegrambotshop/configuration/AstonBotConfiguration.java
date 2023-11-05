@@ -1,0 +1,26 @@
+package com.example.telegrambotshop.configuration;
+
+import com.example.telegrambotshop.bot.AstonBot;
+import okhttp3.OkHttpClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+
+@Configuration
+public class AstonBotConfiguration {
+
+    @Bean
+    public TelegramBotsApi telegramBotsApi(AstonBot astonBot) throws TelegramApiException {
+        TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
+        api.registerBot(astonBot);
+        return api;
+    }
+
+    @Bean
+    public OkHttpClient okHttpClient() {
+        return new OkHttpClient();
+    }
+
+}
