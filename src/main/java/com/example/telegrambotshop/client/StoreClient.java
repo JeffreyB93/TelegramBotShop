@@ -6,6 +6,7 @@ import com.example.telegrambotshop.dto.user.RequestUserDto;
 import com.example.telegrambotshop.dto.user.ResponseUserDto;
 import com.example.telegrambotshop.exception.ServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -43,10 +44,21 @@ public class StoreClient {
                 .build();
         try (var response = client.newCall(request).execute()) {
             ResponseBody body = response.body();
-            String qwe =  body.string();
-            ObjectMapper objectMapper = new ObjectMapper();
 
-            List<StoreDto> storesDto = objectMapper.readValue(body.string(), objectMapper.getTypeFactory().constructCollectionType(List.class, StoreDto.class));
+            //String json = "[{\"name\":\"John\",\"age\":30},{\"name\":\"Jane\",\"age\":25}]";
+
+            //String qwe = "[{\"id\":\"2121\",\"name\":\"qwe\"\"}, {\"id\":\"111\",\"name\":\"asd\"\"}]";
+
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<StoreDto> storesDto = objectMapper.readValue(body.string(), new TypeReference<List<StoreDto>>() {});
+
+
+
+            //String qwe =  body.string();
+            //ObjectMapper objectMapper = new ObjectMapper();
+
+            //List<StoreDto> storesDto = objectMapper.readValue(body.string(), objectMapper.getTypeFactory().constructCollectionType(List.class, StoreDto.class));
             /*Class<StoreDto> ListStoreDto  = StoreDto.class;
             List<StoreDto> storeDto = Collections.singletonList(mapper.readValue(body.string(), ListStoreDto));*/
             return storesDto ;

@@ -15,7 +15,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,24 +23,25 @@ import java.util.stream.Collectors;
 @Component
 public class AstonBot extends TelegramLongPollingBot {
 
-    private boolean authorization = false;
-
-    private static final String START = "/start";
-
+    //private static final String START = "/start";
     @Value("${bot.name}")
     private String botName;
-
     @Value("${bot.token}")
     private String botToken;
-
     private UserClient userClient;
     private StoreClient storeClient;
-
+    private Authorization authorization;
     private ObjectMapper mapper = new ObjectMapper();
 
-    public AstonBot(UserClient userClient, StoreClient storeClient) {
+    private boolean userBoolean = false;
+    private boolean passwordBoolean = false;
+
+
+    public AstonBot(UserClient userClient, StoreClient storeClient,
+                    Authorization authorization) {
         this.userClient = userClient;
         this.storeClient = storeClient;
+        this.authorization = authorization;
     }
 
     @Override
@@ -49,10 +49,35 @@ public class AstonBot extends TelegramLongPollingBot {
         if (!update.hasMessage() || !update.getMessage().hasText()) {
             return;
         }
-        String message = update.getMessage().getText();
         Long chatId = update.getMessage().getChatId();
         String userName = update.getMessage().getChat().getUserName();
-        if (!authorization) {
+        String message = update.getMessage().getText();
+
+        if (message.equals("/start")) {
+            userBoolean = authorization.startCommand(update);
+        }
+        if (userBoolean && !passwordBoolean) {
+            passwordBoolean = authorization.authenticationCommand(update);
+        } else if (userBoolean && passwordBoolean) {
+            //store
+
+        } else {
+            userBoolean = authorization.registrationCommand(update);
+            if (userBoolean) {
+                passwordBoolean = true;
+            }
+        }
+
+
+
+
+        //String message = update.getMessage().getText();
+        //Long chatId = update.getMessage().getChatId();
+        //String userName = update.getMessage().getChat().getUserName();
+
+
+
+        /*if (!authorization) {
             switch (message) {
                 case START -> {
                     startCommand(chatId, userName);
@@ -61,7 +86,7 @@ public class AstonBot extends TelegramLongPollingBot {
             }
         } else {
 
-        }
+        }*/
 
         /*switch (message) {
             case START -> {
@@ -75,7 +100,7 @@ public class AstonBot extends TelegramLongPollingBot {
         }*/
     }
 
-    private void authorizationCommand(Long chatId, String userName, String message) {
+    /*private void authorizationCommand(Long chatId, String userName, String message) {
 
         RequestUserDto requestUserDto = new RequestUserDto(userName, message);
         Optional<String> jsonString = null;
@@ -99,7 +124,7 @@ public class AstonBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
         System.out.println(jsonString.get());
-    }
+    }*/
 
     private void getStore(Long chatId) throws ServiceException {
         List<StoreDto> storeSDto = storeClient.getStoreService();
@@ -122,7 +147,7 @@ public class AstonBot extends TelegramLongPollingBot {
         sendMessage(chatId, formattedText);
     }
 
-    private void startCommand(Long chatId, String userName) {
+    private void passwordCommand(Long chatId, String userName) {
         var text = """
                 Добро пожаловать в бот, %s!
                 Введите пожалуйста свой пароль.

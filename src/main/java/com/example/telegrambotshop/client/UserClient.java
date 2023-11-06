@@ -30,11 +30,25 @@ public class UserClient {
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    public Optional<String> getUserService(RequestUserDto requestUserDto) throws ServiceException, JsonProcessingException {
-        String jsonString = mapper.writeValueAsString(requestUserDto);
+    public Optional<String> getUserService() throws ServiceException, JsonProcessingException {
         Request request = new Request.Builder()
                 .url(serviceUserUrl)
-                .post(RequestBody.create(jsonString.getBytes()))
+                .get()
+                .build();
+
+        try (var response = client.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            return body == null ? Optional.empty() : Optional.of(body.string());
+        } catch (IOException e) {
+            throw new ServiceException("Нет подключение к серверу!", e);
+        }
+    }
+
+    public Optional<String> postUserService(String string) throws ServiceException, JsonProcessingException {
+        //String jsonString = mapper.writeValueAsString(requestUserDto);
+        Request request = new Request.Builder()
+                .url(serviceUserUrl)
+                .post(RequestBody.create(string.getBytes()))
                 .build();
 
         try (var response = client.newCall(request).execute()) {
