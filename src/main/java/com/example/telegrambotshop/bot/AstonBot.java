@@ -2,12 +2,7 @@ package com.example.telegrambotshop.bot;
 
 import com.example.telegrambotshop.client.StoreClient;
 import com.example.telegrambotshop.client.UserClient;
-import com.example.telegrambotshop.dto.store.StoreDto;
-import com.example.telegrambotshop.dto.user.RequestUserDto;
-import com.example.telegrambotshop.dto.user.ResponseUserDto;
-import com.example.telegrambotshop.exception.ServiceException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,44 +11,128 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 
 @Component
 public class AstonBot extends TelegramLongPollingBot {
 
-    //private static final String START = "/start";
+    private static final String START = "/start";
+    private static final String STORES = "/stores";
+    private static final String SHOP = "/shop";
+    private static final String PRODUCT = "/product";
+    private static final String ADDRESS = "/address";
+
     @Value("${bot.name}")
     private String botName;
     @Value("${bot.token}")
     private String botToken;
     private UserClient userClient;
     private StoreClient storeClient;
-    private Authorization authorization;
-    private ObjectMapper mapper = new ObjectMapper();
+    private UserCommands userCommands;
+    private StoreCommands storeCommands;
 
-    private boolean userBoolean = false;
-    private boolean passwordBoolean = false;
-
-
-    public AstonBot(UserClient userClient, StoreClient storeClient,
-                    Authorization authorization) {
+    public AstonBot(UserClient userClient,
+                    StoreClient storeClient,
+                    UserCommands userCommands,
+                    StoreCommands storeCommands) {
         this.userClient = userClient;
         this.storeClient = storeClient;
-        this.authorization = authorization;
+        this.userCommands = userCommands;
+        this.storeCommands = storeCommands;
     }
 
+    @SneakyThrows
     @Override
     public void onUpdateReceived(Update update) {
         if (!update.hasMessage() || !update.getMessage().hasText()) {
             return;
         }
         Long chatId = update.getMessage().getChatId();
-        String userName = update.getMessage().getChat().getUserName();
         String message = update.getMessage().getText();
+        System.out.println(message);
+        switch (message) {
+            case START -> start(chatId, userCommands.startCommand(update));
+            case STORES -> stores(chatId, storeCommands.storesCommand(update));
+            //case STORE -> store(chatId, storeCommands.getGoodsCommand(update));
+            /*case ORDER + id ->;
+            case basket + id ->;
+            default -> helepCommand(chatId, userName, message);*/
+        }
+        if (message.contains(SHOP)) {
+            store(chatId, storeCommands.getGoodsCommand(update));
+        }
+        if (message.contains(PRODUCT)) {
+            product(chatId, storeCommands.postGoodCommand(update));
+        }
+        if (message.contains(ADDRESS)) {
+            stop(chatId, storeCommands.endGoodCommand(update));
+        }
+    }
 
-        if (message.equals("/start")) {
+    private void start(Long chatId, boolean userName) {
+        String text = "";
+        if (userName){
+            text = """
+                Добро пожаловать в бот!
+                
+                /delivery - если ты курьер
+                /stores - список магазинов
+                /address/(Ваш адрес)- завершение заказа 
+                
+                Дополнительные команды:
+                /help - получение справки
+                """;
+        }
+        sendMessage(chatId, text);
+    }
+
+    private void stores(Long chatId, List<String> goodsName) {
+        StringBuilder text = new StringBuilder();
+        text.append("""
+                Введите название магазина.
+                """);
+
+        for(String goodName: goodsName) {
+            text.append("/shop/").append(goodName).append("\n");
+        }
+        String formattedText = String.format(String.valueOf(text));
+        sendMessage(chatId, formattedText);
+    }
+
+    private void store(Long chatId, List<String> productsName) {
+        StringBuilder text = new StringBuilder();
+        text.append(" Введите название продукта.\n");
+        for(String productName: productsName) {
+            text.append("/product/").append(productName).append("\n");
+        }
+        String formattedText = String.format(String.valueOf(text));
+        sendMessage(chatId, formattedText);
+    }
+
+    private void product(Long chatId, String productName) {
+        StringBuilder text = new StringBuilder();
+        text.append("Продукт ").append(productName).append(" добавлен в корзину.");
+        String formattedText = String.format(String.valueOf(text));
+        sendMessage(chatId, formattedText);
+    }
+
+    private void stop(Long chatId, String address) {
+        String text = "";
+        text = """
+            Введите пдрес через /address/(Ваш адрес)
+            
+            /delivery - если ты курьер
+            /stores - список магазинов
+            /stop - завершить заказ
+            
+            Дополнительные команды:
+            /help - получение справки
+            """;
+        sendMessage(chatId, text);
+
+    }
+
+
+        /*if (message.equals("/start")) {
             userBoolean = authorization.startCommand(update);
         }
         if (userBoolean && !passwordBoolean) {
@@ -66,7 +145,7 @@ public class AstonBot extends TelegramLongPollingBot {
             if (userBoolean) {
                 passwordBoolean = true;
             }
-        }
+        }*/
 
 
 
@@ -98,7 +177,10 @@ public class AstonBot extends TelegramLongPollingBot {
             case HELP -> helpCommand(chatId);
             default -> unknownCommand(chatId);
         }*/
-    }
+
+
+
+
 
     /*private void authorizationCommand(Long chatId, String userName, String message) {
 
@@ -126,7 +208,7 @@ public class AstonBot extends TelegramLongPollingBot {
         System.out.println(jsonString.get());
     }*/
 
-    private void getStore(Long chatId) throws ServiceException {
+    /*private void getStore(Long chatId) throws ServiceException {
         List<StoreDto> storeSDto = storeClient.getStoreService();
         ObjectMapper mapper = new ObjectMapper();
 
@@ -136,7 +218,7 @@ public class AstonBot extends TelegramLongPollingBot {
                 """ + storesName;
         var formattedText = String.format(text);
         sendMessage(chatId, formattedText);
-    }
+    }*/
 
     private void helloUser(Long chatId, String firstName, String lastName) {
         var text = """
@@ -166,7 +248,7 @@ public class AstonBot extends TelegramLongPollingBot {
 
     private void sendMessage(Long chatId, String text) {
         var chatIdStr = String.valueOf(chatId);
-        var sendMessage = new SendMessage(chatIdStr, text);
+        SendMessage sendMessage = new SendMessage(chatIdStr, text);
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {

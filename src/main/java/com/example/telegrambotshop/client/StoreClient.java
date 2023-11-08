@@ -1,12 +1,7 @@
 package com.example.telegrambotshop.client;
 
 
-import com.example.telegrambotshop.dto.store.StoreDto;
-import com.example.telegrambotshop.dto.user.RequestUserDto;
-import com.example.telegrambotshop.dto.user.ResponseUserDto;
 import com.example.telegrambotshop.exception.ServiceException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -16,11 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class StoreClient {
@@ -35,45 +25,42 @@ public class StoreClient {
         this.client = client;
     }
 
-    private ObjectMapper mapper = new ObjectMapper();
-
-    public List<StoreDto> getStoreService() throws ServiceException{
+    public String getStoreService() throws ServiceException{
         Request request = new Request.Builder()
                 .url(serviceStoreUrl)
                 .get()
                 .build();
         try (var response = client.newCall(request).execute()) {
             ResponseBody body = response.body();
-
-            //String json = "[{\"name\":\"John\",\"age\":30},{\"name\":\"Jane\",\"age\":25}]";
-
-            //String qwe = "[{\"id\":\"2121\",\"name\":\"qwe\"\"}, {\"id\":\"111\",\"name\":\"asd\"\"}]";
-
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            List<StoreDto> storesDto = objectMapper.readValue(body.string(), new TypeReference<List<StoreDto>>() {});
-
-
-
-            //String qwe =  body.string();
-            //ObjectMapper objectMapper = new ObjectMapper();
-
-            //List<StoreDto> storesDto = objectMapper.readValue(body.string(), objectMapper.getTypeFactory().constructCollectionType(List.class, StoreDto.class));
-            /*Class<StoreDto> ListStoreDto  = StoreDto.class;
-            List<StoreDto> storeDto = Collections.singletonList(mapper.readValue(body.string(), ListStoreDto));*/
-            return storesDto ;
+            return body.string();
         } catch (IOException e) {
             throw new ServiceException("Нет подключение к серверу " + serviceStoreUrl + " !", e);
         }
     }
 
+    public String getStoreService(String message) throws ServiceException {
+        Request request = new Request.Builder()
+                .url(serviceStoreUrl + message)
+                .get()
+                .build();
+        try (var response = client.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            return body.string();
+        } catch (IOException e) {
+            throw new ServiceException("Нет подключение к серверу " + serviceStoreUrl + " !", e);
+        }
+    }
 
-
-
-
-
-
-
-
-
+    public String postStoreService(String nameProduct) throws ServiceException {
+        Request request = new Request.Builder()
+                .url(serviceStoreUrl + "/product")
+                .post(RequestBody.create(nameProduct.getBytes()))
+                .build();
+        try (var response = client.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            return body.string();
+        } catch (IOException e) {
+            throw new ServiceException("Нет подключение к серверу " + serviceStoreUrl + " !", e);
+        }
+    }
 }
