@@ -6,10 +6,14 @@ import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -18,7 +22,7 @@ public class AstonBot extends TelegramLongPollingBot {
     private static final String START = "/start";
     private static final String STORES = "/stores";
     private static final String SHOP = "/shop";
-    private static final String PRODUCT = "/product";
+    private static final String ORDER = "/order";
     private static final String ADDRESS = "/address";
 
     @Value("${bot.name}")
@@ -46,8 +50,20 @@ public class AstonBot extends TelegramLongPollingBot {
         if (!update.hasMessage() || !update.getMessage().hasText()) {
             return;
         }
+        List<BotCommand> listofCommands = new ArrayList<>();
+        listofCommands.add(new BotCommand("/start", "приветствие"));
+        listofCommands.add(new BotCommand("/stores", "список магазинов"));
+        listofCommands.add(new BotCommand("/order", "список продуктов"));
+        listofCommands.add(new BotCommand("/help", "помощь"));
+        try {
+            this.execute(new SetMyCommands(listofCommands, new BotCommandScopeDefault(), null));
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
         Long chatId = update.getMessage().getChatId();
         String message = update.getMessage().getText();
+        String command = update.getMessage().getEntities().get(0).getText();
         System.out.println(message);
         switch (message) {
             case START -> start(chatId, userCommands.startCommand(update));
@@ -60,11 +76,11 @@ public class AstonBot extends TelegramLongPollingBot {
         if (message.contains(SHOP)) {
             store(chatId, storeCommands.getGoodsCommand(update));
         }
-        if (message.contains(PRODUCT)) {
-            product(chatId, storeCommands.postGoodCommand(update));
+        if (message.contains(ORDER)) {
+            product(chatId, storeCommands.orderGoodsCommand(update));
         }
         if (message.contains(ADDRESS)) {
-            stop(chatId, storeCommands.endGoodCommand(update));
+            stop(chatId, userCommands.addressCommand(update));
         }
     }
 

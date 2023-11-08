@@ -38,10 +38,10 @@ public class StoreClient {
         }
     }
 
-    public String getStoreService(String message) throws ServiceException {
+    public String postStoreServiceGoods(String message) throws ServiceException {
         Request request = new Request.Builder()
-                .url(serviceStoreUrl + message)
-                .get()
+                .url(serviceStoreUrl + "/goods")
+                .post(RequestBody.create(message.getBytes()))
                 .build();
         try (var response = client.newCall(request).execute()) {
             ResponseBody body = response.body();
