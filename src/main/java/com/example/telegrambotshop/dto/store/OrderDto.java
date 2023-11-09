@@ -7,7 +7,7 @@ import java.util.Objects;
 public class OrderDto {
 
     Long userId;
-    List<ProductDto> productsDto = new ArrayList<>();
+    List<Product> products = new ArrayList<>();
 
     public Long getUserId() {
         return userId;
@@ -17,24 +17,11 @@ public class OrderDto {
         this.userId = userId;
     }
 
-    public List<ProductDto> getProductsDto() {
-        return productsDto;
+    public List<Product> getProducts() {
+        return products;
     }
 
-    public void setProductsDto(List<ProductDto> productsDto) {
-        this.productsDto = productsDto;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OrderDto orderDto = (OrderDto) o;
-        return Objects.equals(userId, orderDto.userId) && Objects.equals(productsDto, orderDto.productsDto);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(userId, productsDto);
+    public void setProducts(List<Product> products) {
+        this.products = products;
     }
 }

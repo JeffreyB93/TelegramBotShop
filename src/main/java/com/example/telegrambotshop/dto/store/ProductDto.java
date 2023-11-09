@@ -6,6 +6,7 @@ public class ProductDto {
 
     private Long id;
     private String name;
+    // стоимость  + колличество
 
     public Long getId() {
         return id;
